@@ -1,96 +1,150 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function App() {
+  const [task, setTask] = useState(() => {
+    const saved = localStorage.getItem("notes");
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
 
-  const [task, setTask] = useState([]);
+  useEffect(() => {
+    localStorage.setItem("notes", JSON.stringify(task));
+  }, [task]);
 
   const submitHandler = (e) => {
     e.preventDefault();
 
-    if (!title || !details) {
+    if (!title.trim() || !details.trim()) {
       alert("Please fill all fields");
       return;
     }
 
-    const copy = [...task, { title, details }];
-    setTask(copy);
+    const newNote = {
+      id: Date.now(),
+      title,
+      details,
+    };
 
+    setTask([...task, newNote]);
     setTitle("");
     setDetails("");
   };
 
-  const deleteNote = (index) => {
-    const copy = [...task];
-    copy.splice(index, 1);
-
-    setTask(copy)
+  const deleteNote = (id) => {
+    setTask(task.filter((note) => note.id !== id));
   };
 
   return (
-    <div className="h-screen lg:flex gap-5 bg-white p-10">
-      <form
-        onSubmit={(e) => {
-          submitHandler(e);
-        }}
-        className="flex lg:w-1/2 w-full flex-col gap-5"
-      >
-        <h1 className="text-2xl font-bold">Add notes</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-blue-100">
 
-        {/* FIRST INPUT FOR HEADING */}
-        <input
-          type="text"
-          placeholder="Enter Notes Heading"
-          className="border border-gray-600 rounded-md p-2 "
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-          }}
-        />
+      {/* 🔹 Navbar */}
+      <nav className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+        <h1 className="text-xl font-bold text-blue-600">Rahul Notes</h1>
+        <p className="text-sm text-gray-500">
+          Total Notes: <span className="font-semibold">{task.length}</span>
+        </p>
+      </nav>
 
-        {/*DETAILED INPUT */}
-        <textarea
-          placeholder="Enter Details"
-          name=""
-          id=""
-          value={details}
-          onChange={(e) => {
-            setDetails(e.target.value);
-          }}
-          className="border border-gray-600 rounded-md p-2 h-64"
-        ></textarea>
+      {/* 🔹 Hero Section */}
+      <div className="text-center py-10 px-4">
+        <h2 className="text-3xl font-bold text-gray-800">
+          Organize Your Thoughts
+        </h2>
+        <p className="text-gray-600 mt-2 max-w-xl mx-auto">
+          A simple and responsive notes application built with React and Tailwind CSS.
+          Your notes are saved locally in your browser.
+        </p>
+      </div>
 
-        <button className="bg-blue-500 text-white active:bg-amber-700 px-4 py-2 rounded-md cursor-pointer">
-          Add Note
-        </button>
-      </form>
-      <div className="lg:w-1/2 lg:border-l-2 lg:border-gray-300 p-10 h-full">
-        <h1 className="text-2xl font-bold mb-5">Your recent notes</h1>
-        <div className="flex flex-wrap gap-4 h-full overflow-scroll">
-          {task.map((item, index) => {
-            return (
-              <div
-                key={index}
-                className="flex justify-between flex-col relative w-40 bg-cover h-40 p-4 bg-amber-600 rounded-2xl shadow-md text-center items-center"
-              >
-                <h2 className="font-medium text-lg mt-1">{item.title}</h2>
-                <p className="text-xs font-serif mt-1">{item.details}</p>
-                <button
-                  onClick={() => {
-                    deleteNote(index);
-                  }}
-                  className="w-full cursor-pointer active:scale-95 bg-red-500 py-1 text-xs rounded font-bold text-white"
+      {/* 🔹 Main Content */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 px-4 pb-10">
+
+        {/* Form Section */}
+        <form
+          onSubmit={submitHandler}
+          className="bg-white p-6 rounded-2xl shadow-lg flex flex-col gap-5"
+        >
+          <h3 className="text-xl font-semibold text-gray-800">
+            Add New Note
+          </h3>
+
+          <input
+            type="text"
+            placeholder="Enter note title"
+            className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+
+          <textarea
+            placeholder="Enter note details"
+            value={details}
+            onChange={(e) => setDetails(e.target.value)}
+            className="border border-gray-300 rounded-lg p-3 h-40 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+
+          <button
+            type="submit"
+            className="bg-blue-500 hover:bg-blue-600 transition text-white py-2 rounded-lg font-medium"
+          >
+            Add Note
+          </button>
+        </form>
+
+        {/* Notes Section */}
+        <div className="bg-white p-6 rounded-2xl shadow-lg">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6">
+            Your Notes
+          </h3>
+
+          {task.length === 0 ? (
+            <div className="text-center text-gray-500 py-10">
+              <p>No notes added yet.</p>
+              <p className="text-sm mt-2">
+                Start by adding your first note ✍️
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {task.map((note) => (
+                <div
+                  key={note.id}
+                  className="bg-blue-500 text-white p-4 rounded-xl shadow-md flex flex-col justify-between hover:scale-105 transition"
                 >
-                  Delete
-                </button>
-              </div>
-            );
-          })}
+                  <div>
+                    <h4 className="font-semibold text-lg">
+                      {note.title}
+                    </h4>
+                    <p className="text-sm mt-2">
+                      {note.details}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => deleteNote(note.id)}
+                    className="mt-4 bg-red-500 hover:bg-red-600 text-white py-1 rounded-md text-sm transition"
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* 🔹 Footer */}
+      <footer className="bg-white text-center py-4 shadow-inner text-sm text-gray-500">
+        Built with ❤️ by Rahul using React & Tailwind CSS
+      </footer>
+
     </div>
   );
 }
 
 export default App;
+
+
+
